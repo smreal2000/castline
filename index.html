@@ -1147,17 +1147,7 @@ function renderDashboard(data) {
         <div class="score-bar" style="width:${score.score}%; background: linear-gradient(90deg, ${score.color}88, ${score.color})"></div>
       </div>
       <!-- Score breakdown -->
-      <div style="margin-top:16px;display:flex;flex-direction:column;gap:6px">
-        ${score.factors.map(f => `
-          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
-            <div style="flex:1">
-              <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:\${f.type==='good'?'#2ecc71':f.type==='poor'?'#e84040':'#f5a623'}">\${f.text}</div>
-              <div style="font-size:10px;color:var(--muted);margin-top:1px">\${f.detail || ''}</div>
-            </div>
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:\${f.type==='good'?'#2ecc71':f.type==='poor'?'#e84040':'#f5a623'};white-space:nowrap">\${f.val}</div>
-          </div>
-        `).join('')}
-      </div>
+      <div style="margin-top:16px;display:flex;flex-direction:column;gap:6px" id="scoreBreakdown"></div>
     </div>
 
     <!-- PRO TIP -->
@@ -1167,34 +1157,7 @@ function renderDashboard(data) {
     </div>
 
     <!-- SUNRISE / SUNSET FISHING WINDOWS -->
-    ${marine.sunrise ? `
-    <div class="section-label">PRIME FISHING WINDOWS</div>
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 16px;margin-bottom:16px;animation:fadeIn 0.6s ease 0.15s both">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-        <div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.2);border-radius:10px;padding:14px">
-          <div style="font-size:20px;margin-bottom:6px">🌅</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:2px;color:var(--muted)">DAWN WINDOW</div>
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#f5a623;margin:4px 0">${formatSolarTime(marine.sunrise, -45)} – ${formatSolarTime(marine.sunrise, 90)}</div>
-          <div style="font-size:10px;color:var(--muted)">Sunrise ${formatSolarTime(marine.sunrise, 0)}</div>
-          <div style="margin-top:6px;font-size:9px;color:#f5a623;font-family:'IBM Plex Mono',monospace">${getSolarWindowStatus(marine.sunrise, -45, 90)}</div>
-        </div>
-        <div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.2);border-radius:10px;padding:14px">
-          <div style="font-size:20px;margin-bottom:6px">🌇</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:2px;color:var(--muted)">DUSK WINDOW</div>
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#f5a623;margin:4px 0">${formatSolarTime(marine.sunset, -90)} – ${formatSolarTime(marine.sunset, 45)}</div>
-          <div style="font-size:10px;color:var(--muted)">Sunset ${formatSolarTime(marine.sunset, 0)}</div>
-          <div style="margin-top:6px;font-size:9px;color:#f5a623;font-family:'IBM Plex Mono',monospace">${getSolarWindowStatus(marine.sunset, -90, 45)}</div>
-        </div>
-      </div>
-      <!-- Live countdown bar -->
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--muted);margin-bottom:8px">NEXT PRIME WINDOW</div>
-      <div id="solarCountdown" style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--teal);letter-spacing:2px">--:--:--</div>
-      <div id="solarCountdownLabel" style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);margin-top:2px"></div>
-      <div style="margin-top:10px;height:3px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden">
-        <div id="solarProgressBar" style="height:100%;background:linear-gradient(90deg,#f5a62366,#f5a623);border-radius:2px;width:0%;transition:width 1s linear"></div>
-      </div>
-    </div>
-    ` : ''}
+    <div id="solarWindowsCard"></div>
 
     <!-- STATS GRID -->
     <div class="stats-grid">
@@ -1333,6 +1296,52 @@ function renderDashboard(data) {
     arrow.style.left = '50%';
     arrow.style.marginLeft = '-1px';
     arrow.style.marginTop = '-28px';
+  }
+
+  // Populate score breakdown separately to avoid nested template literal issues
+  const breakdownEl = document.getElementById('scoreBreakdown');
+  if (breakdownEl && score.factors) {
+    breakdownEl.innerHTML = score.factors.map(function(f) {
+      const color = f.type === 'good' ? '#2ecc71' : f.type === 'poor' ? '#e84040' : '#f5a623';
+      return '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">' +
+        '<div style="flex:1">' +
+          '<div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:' + color + '">' + (f.text || '') + '</div>' +
+          '<div style="font-size:10px;color:var(--muted);margin-top:1px">' + (f.detail || '') + '</div>' +
+        '</div>' +
+        '<div style="font-family:Bebas Neue,sans-serif;font-size:16px;color:' + color + ';white-space:nowrap">' + (f.val || '') + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  // Populate solar windows card
+  const solarCard = document.getElementById('solarWindowsCard');
+  if (solarCard && marine.sunrise) {
+    solarCard.innerHTML =
+      '<div class="section-label">PRIME FISHING WINDOWS</div>' +
+      '<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 16px;margin-bottom:16px">' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">' +
+          '<div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.2);border-radius:10px;padding:14px">' +
+            '<div style="font-size:20px;margin-bottom:6px">🌅</div>' +
+            '<div style="font-family:IBM Plex Mono,monospace;font-size:8px;letter-spacing:2px;color:var(--muted)">DAWN WINDOW</div>' +
+            '<div style="font-family:Bebas Neue,sans-serif;font-size:22px;color:#f5a623;margin:4px 0">' + formatSolarTime(marine.sunrise, -45) + ' – ' + formatSolarTime(marine.sunrise, 90) + '</div>' +
+            '<div style="font-size:10px;color:var(--muted)">Sunrise ' + formatSolarTime(marine.sunrise, 0) + '</div>' +
+            '<div style="margin-top:6px;font-size:9px;color:#f5a623;font-family:IBM Plex Mono,monospace">' + getSolarWindowStatus(marine.sunrise, -45, 90) + '</div>' +
+          '</div>' +
+          '<div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.2);border-radius:10px;padding:14px">' +
+            '<div style="font-size:20px;margin-bottom:6px">🌇</div>' +
+            '<div style="font-family:IBM Plex Mono,monospace;font-size:8px;letter-spacing:2px;color:var(--muted)">DUSK WINDOW</div>' +
+            '<div style="font-family:Bebas Neue,sans-serif;font-size:22px;color:#f5a623;margin:4px 0">' + formatSolarTime(marine.sunset, -90) + ' – ' + formatSolarTime(marine.sunset, 45) + '</div>' +
+            '<div style="font-size:10px;color:var(--muted)">Sunset ' + formatSolarTime(marine.sunset, 0) + '</div>' +
+            '<div style="margin-top:6px;font-size:9px;color:#f5a623;font-family:IBM Plex Mono,monospace">' + getSolarWindowStatus(marine.sunset, -90, 45) + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div style="font-family:IBM Plex Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--muted);margin-bottom:8px">NEXT PRIME WINDOW</div>' +
+        '<div id="solarCountdown" style="font-family:Bebas Neue,sans-serif;font-size:28px;color:var(--teal);letter-spacing:2px">--:--:--</div>' +
+        '<div id="solarCountdownLabel" style="font-family:IBM Plex Mono,monospace;font-size:10px;color:var(--muted);margin-top:2px"></div>' +
+        '<div style="margin-top:10px;height:3px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden">' +
+          '<div id="solarProgressBar" style="height:100%;background:linear-gradient(90deg,#f5a62366,#f5a623);border-radius:2px;width:0%;transition:width 1s linear"></div>' +
+        '</div>' +
+      '</div>';
   }
 
   // Start live solar countdown
