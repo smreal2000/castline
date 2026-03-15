@@ -1148,7 +1148,7 @@ function renderDashboard(data) {
       </div>
       <!-- Score breakdown -->
       <div style="margin-top:16px;display:flex;flex-direction:column;gap:6px">
-        ${score.factors.map(f => \`
+        ${score.factors.map(f => `
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
             <div style="flex:1">
               <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:\${f.type==='good'?'#2ecc71':f.type==='poor'?'#e84040':'#f5a623'}">\${f.text}</div>
@@ -1156,7 +1156,7 @@ function renderDashboard(data) {
             </div>
             <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:\${f.type==='good'?'#2ecc71':f.type==='poor'?'#e84040':'#f5a623'};white-space:nowrap">\${f.val}</div>
           </div>
-        \`).join('')}
+        `).join('')}
       </div>
     </div>
 
